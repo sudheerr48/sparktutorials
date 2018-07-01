@@ -1,0 +1,15 @@
+  461  git checkout login
+  462  git checkout master
+  463  git remote add origin https://github.com/sudheerr48/sparktutorials.git
+  464  git remote
+  465  git push -u origin master
+  466  touch readme.md
+  467* git add 
+  468  git commit -m "Changed Added readme"
+  469  git push
+  470  history
+  471  history 10
+  472  history 15
+  473  history 15 >> touch historyfile
+  474   touch historyfile
+  475  history 15 >> historyfile
