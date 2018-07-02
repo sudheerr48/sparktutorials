@@ -118,6 +118,26 @@ for i in w.collect():print(i)
 
 
 ------------------------------------------------------------------------
+Filtering the data
+
+
+orders = sc.textFile("/public/retail_db/orders")
+ordersComplete = orders. \
+filter(lambda o: 
+  o.split(",")[3] in ["COMPLETE", "CLOSED"] and o.split(",")[1][:7] == "2014-01")
+
+for i in ordersComplete.take(10):print(i)
+
+
+or I can also write as 
+
+ordersComplete = orders.filter(lambda o : (o.split(",")[3] == 'COMPLETE' or o.split(",")[3] == 'CLOSED') and o.split(",")[1][:7] == "2014-01" )
+
+for i in ordersComplete.take(10):print(i)
+
+
+------------------------------------------------------------------
+
 
 
 
