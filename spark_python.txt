@@ -108,7 +108,16 @@ for i in orderItemsMap.take(10): print(i)
 linesList = ["How are you", "let us perform", "word count using flatMap", "to understand flatMap in detail"]
 lines = sc.parallelize(linesList)
 words = lines.flatMap(lambda l: l.split(" "))
+for i in words.collect():print(i)
+
 tuples = words.map(lambda word: (word, 1))
 for i in tuples.countByKey(): print(i)
+
+w= lines.map(lambda l: l.split(" "))
+for i in w.collect():print(i)
+
+
+------------------------------------------------------------------------
+
 
 
