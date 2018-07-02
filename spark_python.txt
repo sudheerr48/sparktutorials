@@ -41,7 +41,74 @@ sqlContext.read.json("/public/retail_db_json/order_items").show()
 
 ------------------------------------------------------
 
+Row level transformations
+
+#String Manipulation
+orders = sc.textFile("/public/retail_db/orders")
+s = orders.first()
+
+#first character from a string
+s[0]
+
+#first 10 characters from a string
+s[:10]
+
+#get length of string
+len(s)
+
+#One way to get the date, but it will not work if the order id before first
+#comma is more than one character or digit
+s[2:12]
+
+#split and extract date
+s.split(",")
+type(s.split(","))
+#Get Date
+s.split(",")[1]
+#Get customer id
+s.split(",")[2]
+
+#type casting to integer
+int(s.split(",")[0])
+
+#type casting integer to string
+print("printing " + str(1))
+
+int(s.split(",")[1].split(" ")[0].replace("-", ""))
+
+#map
+orders = sc.textFile("/public/retail_db/orders")
+help(orders.map)
+
+#Get status
+orders.map(lambda o: o.split(",")[3]).first()
+#Get count
+orders.map(lambda o: o.split(",")[1]).first()
+
+#Convert date format from YYYY-MM-DD HH24:MI:SS -> YYYYMM
+#Type cast date to integer
+orders.map(lambda o: int(o.split(",")[1].split(" ")[0].replace("-", ""))).first()
+orders.map(lambda o: int(o.split(",")[1].split(" ")[0].replace("-", ""))).take(10)
+orders.map(lambda o: int(o.split(",")[1].split(" ")[0].replace("-", ""))).count()
+
+#Create tuples
+orders.map(lambda o: (o.split(",")[3], 1))
+
+orderItems = sc.textFile("/public/retail_db/order_items")
+orderItems.first()
+for i in orderItems.take(10): print(i)
+orderItemsMap = orderItems. \
+map(lambda oi: (int(oi.split(",")[1]), float(oi.split(",")[4])))
+orderItemsMap.first()
+for i in orderItemsMap.take(10): print(i)
 
 
+
+#flatMap
+linesList = ["How are you", "let us perform", "word count using flatMap", "to understand flatMap in detail"]
+lines = sc.parallelize(linesList)
+words = lines.flatMap(lambda l: l.split(" "))
+tuples = words.map(lambda word: (word, 1))
+for i in tuples.countByKey(): print(i)
 
 
