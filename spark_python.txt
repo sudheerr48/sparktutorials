@@ -3,3 +3,37 @@ pyspark --master yarn --conf spark.ui.port=12888
 -------------------------------------------------------------------------------
 
 Creating RDD
+
+orderItems = sc.textFile("/public/retail_db/order_items")
+type(orderItems)
+help(orderItems)
+orderItems.first()
+for i in orderItems.take(10): print(i)
+
+
+l = range(1, 10000)
+lRDD = sc.parallelize(l)
+productsRaw = open("/data/retail_db/products/part-00000").read().splitlines()
+type(productsRaw)
+productsRDD = sc.parallelize(productsRaw)
+type(productsRDD)
+productsRDD.first()
+for i in productsRDD.take(10): print(i)
+productsRDD.count()
+
+SQLContext have 2 APIs to read data of different file formats
+
+load – typically takes 2 arguments, path and format
+read – have interface for each of the file format (e.g.: read.json)
+Following are the file formats supported
+
+text
+orc
+parquet
+json (example shown)
+csv (3rd party plugin)
+avro (3rd party plugin, but Cloudera clusters get by default)
+
+
+sqlContext.load("/public/retail_db_json/order_items", "json").show()
+sqlContext.read.json("/public/retail_db_json/order_items").show()
