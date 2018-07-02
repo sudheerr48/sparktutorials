@@ -137,6 +137,87 @@ for i in ordersComplete.take(10):print(i)
 
 
 ------------------------------------------------------------------
+JOINS
+
+orders = sc.textFile("/public/retail_db/orders")
+orderitems = sc.textFile("/public/retail_db/order_items")
+
+for i in orders.take(10):print(i)
+for i in orderitems.take(10):print(i)
+
+om = orders.map(lambda i : (int(i.split(",")[0]),i.split(",")[1]))
+for i in om.take(10):print(i)
+
+oim = orderitems.map(lambda i : (int(i.split(",")[1]),float(i.split(",")[4])))
+for i in oim.take(10):print(i)
+
+ojoin = om.join(oim)
+for i in ojoin.take(10):print(i)
+
+
+OUTERJOIN
+
+1.)
+
+OLOJoin = om.leftOuterJoin(oim)
+for i in OLOJoin.take(100):print(i)
+
+2.)
+
+om = orders.map(lambda i : (int(i.split(",")[0]),i.split(",")[3]))
+for i in om.take(10):print(i)
+
+oim = orderitems.map(lambda i : (int(i.split(",")[1]),float(i.split(",")[4])))
+for i in oim.take(10):print(i)
+
+
+OLOJoin = om.leftOuterJoin(oim)
+for i in OLOJoin.take(100):print(i)
+
+OLOJoin.count()
+ojoin.count()
+
+only None
+
+oon = OLOJoin.filter(lambda i : i[1][1] == None)
+for i in oon.take(10):print(i)
+
+oon.count()
+
+
+
+Right outer join with right code
+
+#outer join
+orders = sc.textFile("/public/retail_db/orders")
+orderItems = sc.textFile("/public/retail_db/order_items")
+
+ordersMap = orders. \
+map(lambda o:(int(o.split(",")[0]), o.split(",")[3]))
+
+orderItemsMap = orderItems. \
+map(lambda oi:(int(oi.split(",")[1]), float(oi.split(",")[4])))
+
+ordersLeftOuterJoin = ordersMap.leftOuterJoin(orderItemsMap)
+
+ordersLeftOuterJoinFilter = ordersLeftOuterJoin. \
+filter(lambda o: o[1][1] == None)
+
+for i in ordersLeftOuterJoin.take(10): print(i)
+
+ordersRightOuterJoin = orderItemsMap.rightOuterJoin(ordersMap)
+for i in ordersRightOuterJoin.take(100): print(i)
+
+ordersRightOuterJoinFilter = ordersRightOuterJoin. \
+filter(lambda o: o[1][0] == None)
+
+for i in ordersRightOuterJoinFilter.take(10): print(i)
+
+
+
+
+
+
 
 
 
