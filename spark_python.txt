@@ -37,3 +37,11 @@ avro (3rd party plugin, but Cloudera clusters get by default)
 
 sqlContext.load("/public/retail_db_json/order_items", "json").show()
 sqlContext.read.json("/public/retail_db_json/order_items").show()
+
+
+------------------------------------------------------
+
+
+
+
+
