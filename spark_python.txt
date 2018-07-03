@@ -1,4 +1,4 @@
-pyspark --master yarn --conf spark.ui.port=12889
+pyspark --master yarn --conf spark.ui.port=12884
 
 -------------------------------------------------------------------------------
 
@@ -236,7 +236,7 @@ orderItemsSubtotals.reduce(lambda x, y: x + y)
 
 Aggregations by key
 
-1.)countByKey
+1.)countByKey RDD(id ,1)-> dict
 
 orders = sc.textFile("/public/retail_db/orders")
 for i in orders.take(10):print(i)
@@ -245,21 +245,16 @@ orderstatus = orders.map(lambda o: (o.split(",")[3],1))
 for i in orderstatus.take(10):print(i)
 
 ans = orderstatus.countByKey()
-#Note here and is a dictionary not RDD since count by key is an action
+#Note here ans is a dictionary not RDD since count by key is an action
 ans
 
 
-2.GroupByKey()
+2.GroupByKey()  rdd(K,v) -> rdd(K,answer)
 
 
+Note:-
 
-for i in orderImap.take(10):print(i)
-
-
-oigroupbyid = orderImap.groupByKey()
-for i in oigroupbyid.take(10):print(i)
-
-#Output is in format
+# if Output is in format
 #(2, <pyspark.resultiterable.ResultIterable object at 0x5f790d0>)
 #(4, <pyspark.resultiterable.ResultIterable object at 0x5f77e50>)
 #(8, <pyspark.resultiterable.ResultIterable object at 0x5f77e10>)
@@ -272,13 +267,6 @@ list(l[1]) -> [199.0,255.0,129.00]
 list(l[1])[0] -> 199.0
 sum(l[1]) -> 579.8
 
-revenueperorder = oigroupbyid.map(lambda i: (i[0],sum(i[1])))
-for i in revenueperorder.take(10):print(i)
-
-for rounding off to near integer
-
-revenueperorder = oigroupbyid.map(lambda i: (i[0],round(sum(i[1]))))
-for i in revenueperorder.take(10):print(i)
 
 
 Sorting using groupByKey
@@ -286,21 +274,166 @@ Sorting using groupByKey
 here i have to create a rdd in for (orderId , entire list) then apply groupByKey to it and apply sorted to the list with revenue as key
 
 
+Task        :- Get revenue based on order_id
+
 orderItems = sc.textFile("/public/retail_db/order_items")
 for i in orderItems.take(10):print(i)
 
-#create rdd in the form of (order_id,revenue)
+#converting into key value pairs
 
 
-orderImap = orderItems.map(lambda o: (int(o.split(",")[1]),o))
-for i in orderImap.take(10):print(i)
+ordermap = orderItems.map(lambda o: (int(o.split(",")[1]),float(o.split(",")[4])))
+for i in ordermap.take(10):print(i)
+1 144
+2 199.8
+2 299.4
+2 294.5
 
-#not working 
+omg = ordermap.groupByKey()
+for i in omg.take(10):print(i)
+
+output is in format (2, <pyspark.resultiterable.ResultIterable object at 0x5f790d0>) so we need to convert it into 
+
+(2,[199.8,299.4,294.5])
+so we need to use
+
+roid = omg.map(lambda o: (o[0],sum(o[1])))
+for i in roid.take(10):print(i)
+
+now the output is 
+(2, 579.98)
+(4, 699.85)
+(8, 729.8399999999999)
+and i am rounding off to nearest sum
+
+roidr = omg.map(lambda o: (o[0],round(sum(o[1]))))
+for i in roidr.take(10):print(i)
+
+(2, 580.0)
+(4, 700.0)
+(8, 730.0)
+(10, 652.0)
 
 
-#orderItemsSortedbySubtotalPerOrder = orderImap.flatMap(lambda oi:sorted(oi[1],key = lambda k:float(k.split(",")[4]),reverse=True))
 
-#for i in orderItemsSortedbySubtotalPerOrder.take(10):print(i)
+Task2:- Sorting of revenue in order_id and thereby sort entire table
+
+
+
+
+(2, 980.0)          (2,700.0)
+(2, 700.0)  -->     (2,730.0)
+(2, 730.0)          (2,980.0)
+
+orderItems = sc.textFile("/public/retail_db/order_items")
+for i in orderItems.take(10):print(i)
+
+ordermap = orderItems.map(lambda o: (int(o.split(",")[1]),o))
+for i in ordermap.take(10):print(i)
+
+ogoid = ordermap.groupByKey()
+for i in ogoid.take(10):print(i)
+
+
+l = ogoid.first()
+l[0]
+l[1]
+list(l[1]) ->
+
+[u'2,2,1073,1,199.99,199.99', u'3,2,502,5,250.0,50.0', u'4,2,403,1,129.99,129.99']
+
+sorted(l[1] , key = lambda k: float(k.split(",")[4]) , reverse = True)
+
+ -> True for descending order
+
+osortedsubtotal = ogoid.map (lambda oi: sorted (oi[1] , key = lambda k: float(k.split(",")[4]) , reverse = True))
+for i in osortedsubtotal.take(10):print(i)
+
+[u'3,2,502,5,250.0,50.0', u'2,2,1073,1,199.99,199.99', u'4,2,403,1,129.99,129.99']
+
+[u'6,4,365,5,299.95,59.99', u'8,4,1014,4,199.92,49.98', u'7,4,502,3,150.0,50.0', u'5,4,897,2,49.98,24.99']
+
+[u'18,8,365,5,299.95,59.99', u'19,8,1014,4,199.92,49.98', u'17,8,365,3,179.97,59.99', u'20,8,502,1,50.0,50.0']
+
+see here we are getting again a list of records , so use flatmap instead
+
+osortedsubtotalfm = ogoid.flatMap(lambda oi: sorted (oi[1] , key = lambda k: float(k.split(",")[4]) , reverse = True))
+
+for i in osortedsubtotalfm.take(10):print(i)
+
+
+3,2,502,5,250.0,50.0
+2,2,1073,1,199.99,199.99
+4,2,403,1,129.99,129.99
+
+
+
+
+
+
+
+
+
+3.reduceByKey()
+
+orderItems = sc.textFile("/public/retail_db/order_items")
+for i in orderItems.take(10):print(i)
+
+orderItemsMap = orderItems. \
+map(lambda oi: (int(oi.split(",")[1]), float(oi.split(",")[4])))
+for i in orderItemsMap.take(10):print(i)
+
+from operator import add
+revenuePerOrderId = orderItemsMap. \
+reduceByKey(add)
+
+revenuePerOrderId = orderItemsMap. \
+reduceByKey(lambda x, y: x + y)
+
+for i in revenuePerOrderId.take(10) : print(i)
+
+(if we use group by 
+
+omg = orderItemsMap.groupByKey()
+for i in omg.take(10):print(i)
+
+roid = omg.map(lambda o: (o[0],sum(o[1])))
+for i in roid.take(10):print(i)
+
+)
+
+
+Task 2 :- #Get order item details with minimum subtotal for each order_id
+
+orderItems = sc.textFile("/public/retail_db/order_items")
+
+orderItemsMap = orderItems. \
+map(lambda oi: (int(oi.split(",")[1]), oi))
+
+minSubtotalPerOrderId = orderItemsMap. \
+reduceByKey(lambda x, y: 
+  x if(float(x.split(",")[4]) < float(y.split(",")[4])) else y
+  )
+for i in minSubtotalPerOrderId.take(10): print(i)
+
+
+4.aggregateByKey()
+#Get revenue and count of items for each order id - aggregateByKey
+orderItems = sc.textFile("/public/retail_db/order_items")
+orderItemsMap = orderItems. \
+map(lambda oi: (int(oi.split(",")[1]), float(oi.split(",")[4])))
+for i in orderItemsMap.take(10): print(i)
+revenuePerOrder = orderItemsMap. \
+aggregateByKey((0.0, 0), 
+  lambda x, y: (x[0] + y, x[1] + 1), 
+  lambda x, y: (x[0] + y[0], x[1] + y[1]))
+
+for i in revenuePerOrder.take(10):print(i)
+
+
+----------------------------------------------------------------------
+
+
 
 
 
