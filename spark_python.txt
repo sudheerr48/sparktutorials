@@ -479,6 +479,57 @@ map(lambda p: p[1]). \
 take(1000): print(i)
 
 
+------------------------------------------------------------------------------
+
+#Get top N products by price - Global Ranking - sortByKey and take
+products = sc.textFile("/public/retail_db/products")
+productsMap = products. \
+filter(lambda p: p.split(",")[4] != ""). \
+map(lambda p: (float(p.split(",")[4]), p))
+
+productsSortedByPrice = productsMap.sortByKey(False)
+for i in productsSortedByPrice. \
+map(lambda p: p[1]). \
+take(5): print(i)
+
+#Get top N products by price - Global Ranking - top or takeOrdered
+products = sc.textFile("/public/retail_db/products")
+productsFiltered = products. \
+filter(lambda p: p.split(",")[4] != "")
+for i in productsFiltered.take(10): print(i)
+
+topNProducts = productsFiltered.top(5, key=lambda k: float(k.split(",")[4]))
+topNProducts = productsFiltered. \
+takeOrdered(5, key=lambda k: -float(k.split(",")[4]))
+for i in topNProducts: print(i)
+
+
+-----------------------------------------------------------------------
+
+#Get top N products by price with in each category - By Key Ranking 
+#using groupByKey and flatMap
+products = sc.textFile("/public/retail_db/products")
+productsFiltered = products. \
+filter(lambda p: p.split(",")[4] != "")
+for i in productsFiltered.take(100): print(i)
+
+productsMap = productsFiltered. \
+map(lambda p: (int(p.split(",")[1]), p))
+productsGroupByCategoryId = productsMap.groupByKey()
+for i in productsGroupByCategoryId.take(10): print(i)
+
+
+# t = productsGroupByCategoryId.first()
+# l = sorted(t[1], key=lambda k: float(k.split(",")[4]), reverse=True)
+# l[:3]
+
+topNProductsByCategory = productsGroupByCategoryId. \
+flatMap(lambda p: 
+  sorted(p[1], 
+    key=lambda k: 
+      float(k.split(",")[4]), reverse=True)[:3]
+  )
+for i in topNProductsByCategory.take(10): print(i)
 
 
 
