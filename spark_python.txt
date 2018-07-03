@@ -236,6 +236,8 @@ orderItemsSubtotals.reduce(lambda x, y: x + y)
 
 Aggregations by key
 
+1.)countByKey
+
 orders = sc.textFile("/public/retail_db/orders")
 for i in orders.take(10):print(i)
 
@@ -247,9 +249,58 @@ ans = orderstatus.countByKey()
 ans
 
 
+2.GroupByKey()
 
 
 
+for i in orderImap.take(10):print(i)
+
+
+oigroupbyid = orderImap.groupByKey()
+for i in oigroupbyid.take(10):print(i)
+
+#Output is in format
+#(2, <pyspark.resultiterable.ResultIterable object at 0x5f790d0>)
+#(4, <pyspark.resultiterable.ResultIterable object at 0x5f77e50>)
+#(8, <pyspark.resultiterable.ResultIterable object at 0x5f77e10>)
+
+l = oigroupbyid.first()
+l[0] -> 2
+l[1] -> <pyspark.resultiterable.ResultIterable object at 0x5f790d0>
+list(l[1]) -> [199.0,255.0,129.00]
+
+list(l[1])[0] -> 199.0
+sum(l[1]) -> 579.8
+
+revenueperorder = oigroupbyid.map(lambda i: (i[0],sum(i[1])))
+for i in revenueperorder.take(10):print(i)
+
+for rounding off to near integer
+
+revenueperorder = oigroupbyid.map(lambda i: (i[0],round(sum(i[1]))))
+for i in revenueperorder.take(10):print(i)
+
+
+Sorting using groupByKey
+
+here i have to create a rdd in for (orderId , entire list) then apply groupByKey to it and apply sorted to the list with revenue as key
+
+
+orderItems = sc.textFile("/public/retail_db/order_items")
+for i in orderItems.take(10):print(i)
+
+#create rdd in the form of (order_id,revenue)
+
+
+orderImap = orderItems.map(lambda o: (int(o.split(",")[1]),o))
+for i in orderImap.take(10):print(i)
+
+#not working 
+
+
+#orderItemsSortedbySubtotalPerOrder = orderImap.flatMap(lambda oi:sorted(oi[1],key = lambda k:float(k.split(",")[4]),reverse=True))
+
+#for i in orderItemsSortedbySubtotalPerOrder.take(10):print(i)
 
 
 
