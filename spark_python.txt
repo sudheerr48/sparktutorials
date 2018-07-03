@@ -432,6 +432,51 @@ for i in revenuePerOrder.take(10):print(i)
 
 
 ----------------------------------------------------------------------
+#Sorting
+
+products = sc.textFile("/public/retail_db/products")
+for i in products.take(10):print(i)
+
+
+#Here i am getting one row with empty spaces in 4th place so i am filtering it out
+
+productsMap = products. \
+filter(lambda p: p.split(",")[4] != ""). \
+map(lambda p: (float(p.split(",")[4]), p))
+
+for i in productsMap.take(100):print(i)
+
+productsSortedByPrice = productsMap.sortByKey()
+for i in productsSortedByPrice.take(100):print(i)
+
+
+productsSortedMap = productsSortedByPrice. \
+map(lambda p: p[1])
+
+for i in productsSortedMap.take(100): print(i)
+
+Task2 :- #Sort data by product category and then product price descending - sortByKey
+
+products = sc.textFile("/public/retail_db/products")
+for i in products.take(10): print(i)
+productsMap = products. \
+filter(lambda p: p.split(",")[4] != ""). \
+map(lambda p: ((int(p.split(",")[1]), -float(p.split(",")[4])), p))
+
+for i in productsMap. \
+sortByKey(). \
+map(lambda p: p[1]). \
+take(1000): print(i)
+
+
+
+#descending order
+
+
+for i in productsMap. \
+sortByKey(False). \
+map(lambda p: p[1]). \
+take(1000): print(i)
 
 
 
