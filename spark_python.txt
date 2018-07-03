@@ -1,4 +1,4 @@
-pyspark --master yarn --conf spark.ui.port=12888
+pyspark --master yarn --conf spark.ui.port=12889
 
 -------------------------------------------------------------------------------
 
@@ -213,6 +213,38 @@ filter(lambda o: o[1][0] == None)
 
 for i in ordersRightOuterJoinFilter.take(10): print(i)
 
+--------------------------------------------------------------------
+
+
+
+#Aggregations - total
+orderItems = sc.textFile("/public/retail_db/order_items")
+orderItems.count()
+
+#Aggregations - total - Get revenue for given order_id
+orderItems = sc.textFile("/public/retail_db/order_items")
+orderItemsFiltered = orderItems. \
+filter(lambda oi: int(oi.split(",")[1]) == 2)
+orderItemsSubtotals = orderItemsFiltered. \
+map(lambda oi: float(oi.split(",")[4]))
+
+from operator import add
+# orderItemsSubtotals.reduce(add)
+orderItemsSubtotals.reduce(lambda x, y: x + y)
+
+--------------------------------------------------------------------
+
+Aggregations by key
+
+orders = sc.textFile("/public/retail_db/orders")
+for i in orders.take(10):print(i)
+
+orderstatus = orders.map(lambda o: (o.split(",")[3],1))
+for i in orderstatus.take(10):print(i)
+
+ans = orderstatus.countByKey()
+#Note here and is a dictionary not RDD since count by key is an action
+ans
 
 
 
