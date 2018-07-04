@@ -1,0 +1,81 @@
+$spark-sql  --master yarn --conf spark.ui.port=12567
+
+show databases;
+
+
+
+or you can use hive instead of spark-sql
+
+$hive
+
+create database sudheerr48_retail_db_txt;
+use sudheerr48_retail_db_txt;
+show tables;
+
+#after creating database ,the files are stored in /etc/hive/s---
+
+set hive.metastore.warehouse.dir;
+#it will show the path where all the databases are stored at  /apps/hive/warehouse , so next 
+run 
+dfs -ls /apps/hive/warehouse;
+
+come out of hive and run
+cd /data/retail_db/orders
+ls -ltr
+view part-00000
+
+go to hive and open database
+
+create table orders(
+order_id int,
+order_date string,
+order_customer_id int,
+order_status string
+) row format delimited fields terminated by ','
+stored as textfile;
+
+load data local inpath '/data/retail_db/orders' into table orders;
+
+dfs -ls /apps/hive/warehouse/sudheerr48_retail_db_txt/orders;
+
+
+select * from orders;
+
+create one more table for ordeitems
+
+
+
+
+------------------------------------
+saving database in orc format
+
+
+create database sudheerr48_retail_db_orc;
+use sudheerr48_retail_db_orc;
+show tables;
+
+
+create table orders(
+order_id int,
+order_date string,
+order_customer_id int,
+order_status string
+) row format delimited fields terminated by ','
+stored as orc;
+
+describe formatted orders;
+
+insert into table orders select * from sudheerr48_retail_db_txt.orders;
+
+
+-----------------------------------------
+
+Launch pyspark
+sqlContext.sql("use sudheerr48_retail_db_txt")
+sqlContext.sql("show tables").show()
+for i in sqlContext.sql("describe formatted orders").collect(i):print(i)
+sqlContext.sql("select * from orders limit 10").show()
+
+
+
+

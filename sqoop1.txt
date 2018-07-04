@@ -90,8 +90,7 @@ sqoop import \
   --warehouse-dir /user/sudheerr48/sqoop_import/retail_db \
   --split-by order_item_order_id
 
-
-
+ 
 --------------------------------------------------------------------------------------------------------
 
 sqoop import \
