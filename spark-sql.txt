@@ -77,5 +77,190 @@ for i in sqlContext.sql("describe formatted orders").collect(i):print(i)
 sqlContext.sql("select * from orders limit 10").show()
 
 
+-------------------------------------------
+
+select order_status,
+       case  
+            when order_status IN ('CLOSED', 'COMPLETE') then 'No Action' 
+            when order_status IN ('ON_HOLD', 'PAYMENT_REVIEW', 'PENDING', 'PENDING_PAYMENT', 'PROCESSING') then 'Pending Action'
+            else 'Risky'
+       end from orders limit 10;
+
+
+-------------------------------------------
+
+select o.*, c.* from customers c left outer join orders o
+on o.order_customer_id = c.customer_id
+limit 10;
+
+select count(1) from orders o inner join customers c
+on o.order_customer_id = c.customer_id;
+
+select count(1) from customers c left outer join orders o
+on o.order_customer_id = c.customer_id;
+
+select c.* from customers c left outer join orders o
+on o.order_customer_id = c.customer_id
+where o.order_customer_id is null;
+
+-----------------------------------------------
+
+
+
+
+select o.order_id, o.order_date, o.order_status, round(sum(oi.order_item_subtotal), 2) order_revenue
+from orders o join order_items oi
+on o.order_id = oi.order_item_order_id
+where o.order_status in ('COMPLETE', 'CLOSED')
+group by o.order_id, o.order_date, o.order_status
+having sum(oi.order_item_subtotal) >= 1000;
+
+---------------------------------------------
+select o.*, c.* from customers c left outer join orders o
+on o.order_customer_id = c.customer_id
+limit 10;
+
+select count(1) from orders o inner join customers c
+on o.order_customer_id = c.customer_id;
+
+select count(1) from customers c left outer join orders o
+on o.order_customer_id = c.customer_id;
+
+select c.* from customers c left outer join orders o
+on o.order_customer_id = c.customer_id
+where o.order_customer_id is null;
+
+-------------------------------------------------------------------------------------------
+
+
+Spark SQL – Analytics and Windowing Functions
+
+use dgadiraju_retail_db_txt;
+show tables;
+
+
+select o.order_id,o.order_date,o.order_status
+from orders o join order_items oi 
+on o.order_id = oi.order_item_order_id
+where o.order_status in ('COMPLETE','CLOSED')
+order by o.order_date desc;
+
+1.)
+
+
+select o.order_id,o.order_date,o.order_status,round(sum(oi.order_item_subtotal),2) order_revenue
+from orders o join order_items oi 
+on o.order_id = oi.order_item_order_id
+where o.order_status in ('COMPLETE','CLOSED')
+group by o.order_id,o.order_date,o.order_status
+having sum(oi.order_item_subtotal) >=1000
+order by order_date, order_revenue desc;
+
+The below can't work rather we have to use 2) 
+
+select o.order_id,o.order_date,o.order_status, oi.order_item_subtotal , 
+round(sum(oi.order_item_subtotal),2) order_revenue
+oi.order_item_subtotal /round(sum(oi.order_item_subtotal),2) 
+from orders o join order_items oi 
+on o.order_id = oi.order_item_order_id
+where o.order_status in ('COMPLETE','CLOSED')
+group by o.order_id,o.order_date,o.order_status
+having sum(oi.order_item_subtotal) >=1000
+order by order_date, order_revenue desc;
+
+
+2.)
+
+select o.order_id,o.order_date,o.order_status, oi.order_item_subtotal , 
+round(sum(oi.order_item_subtotal) over (partition by o.order_id),2) order_revenue,
+oi.order_item_subtotal /round(sum(oi.order_item_subtotal) over (partition by o.order_id),2) pct_revenue
+from orders o join order_items oi 
+on o.order_id = oi.order_item_order_id
+where o.order_status in ('COMPLETE','CLOSED') 
+order by order_date, order_revenue desc;
+
+#with condition order_revenue> 1000
+
+select * from (
+select o.order_id,o.order_date,o.order_status, oi.order_item_subtotal , 
+round(sum(oi.order_item_subtotal) over (partition by o.order_id),2) order_revenue,
+oi.order_item_subtotal /round(sum(oi.order_item_subtotal) over (partition by o.order_id),2) pct_revenue
+from orders o join order_items oi 
+on o.order_id = oi.order_item_order_id
+where o.order_status in ('COMPLETE','CLOSED')) q
+where order_revenue >=1000
+order by order_date, order_revenue desc;
+
+
+
+#with avg 
+
+select * from (
+select o.order_id,o.order_date,o.order_status, oi.order_item_subtotal , 
+round(sum(oi.order_item_subtotal) over (partition by o.order_id),2) order_revenue,
+oi.order_item_subtotal /round(sum(oi.order_item_subtotal) over (partition by o.order_id),2) pct_revenue,
+(round(avg(oi.order_item_subtotal) over (partition by o.order_id),2))avg_revenue 
+from orders o join order_items oi 
+on o.order_id = oi.order_item_order_id
+where o.order_status in ('COMPLETE','CLOSED')) q
+where order_revenue >=1000
+order by order_date, order_revenue desc;
+
+--------------------------------------------------------------
+Ranking
+
+select * from (
+select o.order_id,o.order_date,o.order_status, oi.order_item_subtotal , 
+round(sum(oi.order_item_subtotal) over (partition by o.order_id),2) order_revenue,
+oi.order_item_subtotal /round(sum(oi.order_item_subtotal) over (partition by o.order_id),2) pct_revenue,
+(round(avg(oi.order_item_subtotal) over (partition by o.order_id),2))avg_revenue ,
+rank() over (partition by o.order_id order by oi.order_item_subtotal desc)rnk_revenue,
+dense_rank() over (partition by o.order_id order by oi.order_item_subtotal desc)densernk_revenue,
+percent_rank() over (partition by o.order_id order by oi.order_item_subtotal desc)pct_rnk_revenue,
+row_number() over (partition by o.order_id order by oi.order_item_subtotal desc)rnorderby_revenue,
+row_number() over (partition by o.order_id )rn_revenue
+from orders o join order_items oi exit
+on o.order_id = oi.order_item_order_id
+where o.order_status in ('COMPLETE','CLOSED')) q
+where order_revenue >=1000
+order by order_date, order_revenue desc, rn_revenue;
+
+--------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
