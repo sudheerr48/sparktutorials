@@ -225,7 +225,7 @@ where o.order_status in ('COMPLETE','CLOSED')) q
 where order_revenue >=1000
 order by order_date, order_revenue desc, rn_revenue;
 
---------------------------------------------
+--------------------------------------------aaaa
 
 
 
